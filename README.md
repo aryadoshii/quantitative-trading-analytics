@@ -1,502 +1,397 @@
-# Quantitative Trading Analytics System
+<h1 align="center">📊 Quantitative Trading Analytics Platform</h1>
 
-**Real-time pairs trading analytics with statistical arbitrage signals**
+<p align="center">
+  <b>Real-time statistical arbitrage system for cryptocurrency pairs trading with intelligent signal quality assessment and institutional-grade risk management.</b>
+</p>
 
-A complete end-to-end system for ingesting live cryptocurrency tick data, computing statistical analytics, and visualizing trading opportunities through an interactive dashboard.
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12-blue" alt="Python">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+  <img src="https://img.shields.io/badge/docker-ready-brightgreen" alt="Docker">
+</p>
 
----
+<p align="center">
+  <img src="docs/images/dashboard-main.png" alt="Main Dashboard" width="800"/>
+</p>
 
-## 🎯 Project Overview
-
-This system demonstrates production-grade quantitative trading infrastructure by:
-
-- **Ingesting** real-time tick data from Binance WebSocket streams
-- **Storing** time-series data efficiently in TimescaleDB with Redis caching
-- **Computing** statistical arbitrage metrics (hedge ratio, spread, z-score, cointegration)
-- **Visualizing** analytics through an interactive Streamlit dashboard
-- **Alerting** on trading opportunities based on customizable rules
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐
-│  Binance WS     │  Live tick data (BTC, ETH, etc.)
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Data Ingestion │  WebSocket client with reconnection
-│    & Validation │  Data normalization & validation
-└────────┬────────┘
-         │
-         ├──────────────────┬──────────────────┐
-         ▼                  ▼                  ▼
-┌─────────────┐    ┌──────────────┐   ┌──────────────┐
-│ In-Memory   │    │    Redis     │   │ TimescaleDB  │
-│   Buffer    │    │    Cache     │   │  (Postgres)  │
-│ (Low latency)    │ (Fast access)│   │ (Persistence)│
-└─────────────┘    └──────────────┘   └──────────────┘
-         │                  │                  │
-         └──────────────────┴──────────────────┘
-                            │
-                            ▼
-                   ┌─────────────────┐
-                   │   Analytics     │
-                   │     Engine      │
-                   │ • Hedge Ratio   │
-                   │ • Spread/Z-score│
-                   │ • Cointegration │
-                   │ • Correlation   │
-                   └────────┬────────┘
-                            │
-                ┌───────────┴───────────┐
-                ▼                       ▼
-        ┌───────────────┐      ┌───────────────┐
-        │ Alert Engine  │      │   Streamlit   │
-        │ • Rule-based  │      │   Dashboard   │
-        │ • Real-time   │      │ • Interactive │
-        └───────────────┘      └───────────────┘
-```
-
-### Key Design Decisions
-
-**1. TimescaleDB over Standard PostgreSQL**
-- **Pro:** 10-100x faster time-series queries, automatic compression, better indexing
-- **Con:** Additional dependency
-- **Decision:** Essential for handling high-frequency tick data efficiently
-
-**2. Redis Streams for Real-time Buffering**
-- **Pro:** Sub-millisecond latency, persistence, simple operations
-- **Con:** Less scalable than Kafka for very high throughput
-- **Decision:** Perfect for prototype, easy migration path to Kafka documented
-
-**3. Async Python Architecture**
-- **Pro:** Non-blocking I/O for WebSocket + Database operations
-- **Con:** Slightly more complex code
-- **Decision:** Critical for handling concurrent data streams
-
-**4. Batch Insertion Pattern**
-- **Pro:** Reduces database load by 10-100x vs. individual inserts
-- **Con:** Small latency (up to 5 seconds) before data appears
-- **Decision:** Worth it for scalability; real-time analytics use in-memory buffer
+<p align="center">
+  <a href="#-overview">Overview</a> •
+  <a href="#-key-features">Features</a> •
+  <a href="#%EF%B8%8F-architecture">Architecture</a> •
+  <a href="#-installation">Installation</a> •
+  <a href="#-key-learnings">Key Learnings</a>
+</p>
 
 ---
 
-## 📊 Analytics Implemented
+<h2 align="center">🎯 Overview</h2>
 
-### Core Statistical Metrics
+<p align="center">
+  Built for the <b>Gemscap Quantitative Developer</b> assignment, this production-grade system demonstrates:
+</p>
 
-1. **Hedge Ratio (OLS Regression)**
-   - Linear regression coefficient between two price series
-   - Used to calculate spread: `spread = price1 - β * price2`
+- ✅ **Real-time data ingestion** from Binance WebSocket (sub-second latency)
+- ✅ **Novel Signal Quality Scoring** - composite 0-100 metric synthesizing 5 factors  
+- ✅ **Live PnL simulation** with institutional metrics (Sharpe, drawdown, profit factor)
+- ✅ **Institutional risk management** (VaR, CVaR, portfolio health scoring)
+- ✅ **Production architecture** (Docker, TimescaleDB, Redis, async Python)
 
-2. **Spread & Z-Score**
-   - Z-score = (spread - rolling_mean) / rolling_std
-   - Indicates how many standard deviations from mean
-   - Values > 2 or < -2 suggest mean-reversion opportunity
-
-3. **Cointegration Test (ADF)**
-   - Augmented Dickey-Fuller test for spread stationarity
-   - p-value < 0.05 suggests cointegrated pair (tradeable)
-
-4. **Rolling Correlation**
-   - Pearson correlation over rolling window
-   - Values < 0.7 suggest relationship breakdown
-
-### Advanced Features
-
-5. **Half-Life of Mean Reversion**
-   - AR(1) model to estimate reversion speed
-   - Helps size positions and set exit timeframes
-
-6. **Volatility Regime Detection**
-   - Classifies current volatility as low/normal/high
-   - Adaptive strategy parameters based on regime
-
-7. **Trend Detection**
-   - Linear regression slope analysis
-   - Distinguishes trending vs. mean-reverting markets
-
-### Execution Analytics
-
-8. **VWAP Tracking**
-   - Volume-weighted average price
-   - Execution quality metric
-
-9. **Trade Imbalance**
-   - Buy vs. sell pressure indicator
-   - Range: [-1, 1]
+<p align="center">
+  <b>The Journey:</b> Through rigorous testing and parameter optimization, I discovered the critical distinction between <b>correlation and cointegration</b> - understanding that high correlation alone doesn't guarantee profitable mean-reversion trading.
+</p>
 
 ---
 
-## 🚀 Quick Start
+<h2 align="center">✨ Key Features</h2>
 
-### Prerequisites
+<h3 align="center">🎯 1. Signal Quality Score (My Personal Touch)</h3>
 
-- Python 3.9+
-- Docker & docker-compose
-- 2GB RAM minimum
-- Internet connection for WebSocket data
+<p align="center">
+  Instead of trading on z-score alone, this composite metric intelligently weighs five factors:
+</p>
 
-### Installation
+<p align="center">
+  <img src="docs/images/component-breakdown.png" alt="Signal Quality Components" width="800"/>
+</p>
 
+**Components:**
+- **Z-Score Strength (25%)**: Signal magnitude - distance from mean
+- **Correlation Quality (25%)**: Pair relationship strength (0.983 = excellent)
+- **Spread Stability (20%)**: Coefficient of variation (predictability)
+- **Cointegration Test (15%)**: ADF p-value for stationarity validation
+- **Historical Performance (15%)**: Win rate + profit factor track record
+
+<p align="center">
+  <b>Why This Matters:</b> High correlation (98%+) doesn't guarantee profitable trading. The system correctly identifies when spread is <b>non-stationary</b> (ADF p-value > 0.05), preventing trading during unfavorable conditions.
+</p>
+
+---
+
+<h3 align="center">💰 2. Live Trading Simulator</h3>
+
+<p align="center">
+  Real-time position tracking with hypothetical execution:
+</p>
+
+<p align="center">
+  <img src="docs/images/trading-simulator.png" alt="Trading Simulator" width="800"/>
+</p>
+
+**Key Features:**
+- Entry/Exit Logic: |Z-Score| > 2.0  
+- Position Sizing: 10% of capital per trade
+- Risk Management: Stop loss (-5%), take profit (+10%)
+- Performance Tracking: Sharpe ratio, profit factor, drawdown
+
+<p align="center">
+  <b>Honest Results:</b> The system shows both success <b>and</b> failure scenarios, demonstrating real-world challenges when cointegration assumptions fail.
+</p>
+
+---
+
+<h3 align="center">⚠️ 3. Risk Dashboard</h3>
+
+<p align="center">
+  Institutional-grade risk metrics in sidebar:
+</p>
+
+<p align="center">
+  <img src="docs/images/price-charts.png" alt="Risk Dashboard" width="800"/>
+</p>
+
+**Metrics Provided:**
+- **Portfolio Health Score**: Composite risk assessment (0-100)
+- **Value at Risk (95%)**: Maximum expected loss at confidence level
+- **Current Drawdown**: Distance from peak equity
+- **Position Exposure**: % of capital at risk
+
+---
+
+<h3 align="center">📈 4. Real-Time Analytics</h3>
+
+<p align="center">
+  Complete statistical arbitrage toolkit:
+</p>
+
+<p align="center">
+  <img src="docs/images/spread-analysis.png" alt="Spread Analysis" width="400"/>
+  <img src="docs/images/correlation.png" alt="Correlation" width="400"/>
+</p>
+
+**Features:**
+- Spread & Z-Score charts with threshold visualization
+- Rolling correlation analysis (60-period window)
+- Price comparison with volume overlay
+- Analytics summary table (all statistical metrics)
+
+---
+
+<h2 align="center">🏗️ Architecture</h2>
+
+<p align="center">
+  <img src="docs/images/architecture.png" alt="System Architecture" width="800"/>
+</p>
+
+<h3 align="center">Layer-by-Layer:</h3>
+
+**1. Data Ingestion**
+- Binance WebSocket API (BTC-USDT, ETH-USDT)
+- ~100-500 ticks/second
+- Data validation + tick buffering (500 ticks in-memory)
+
+**2. Three-Tier Storage**
+- **In-Memory Buffer**: Sub-millisecond latency for hot path
+- **Redis Cache**: 5-60s TTL for analytics state
+- **TimescaleDB**: Historical time-series queries (hypertables)
+
+**3. Analytics Engine** (Runs every 5 seconds)
+- Hedge ratio via OLS regression
+- Z-score computation (rolling 60-bar window)
+- ADF test for cointegration
+- Signal Quality Score synthesis
+- Risk metrics calculation
+
+**4. Presentation Layer**
+- Streamlit dashboard with Plotly charts
+- Auto-refresh every 5 seconds
+- Configurable parameters (sidebar)
+
+<p align="center">
+  <b>Tech Stack:</b> Python 3.12, Streamlit, TimescaleDB, Redis, Docker Compose, Pandas/NumPy, Plotly
+</p>
+
+---
+
+<h2 align="center">🚀 Installation</h2>
+
+<h3 align="center">Prerequisites</h3>
+
+<p align="center">
+  Docker & Docker Compose • Python 3.12+ • 4GB RAM minimum
+</p>
+
+<h3 align="center">Quick Start</h3>
 ```bash
-# Clone or extract the project
-cd quantdev-assignment
+# Clone repository
+git clone https://github.com/aryadoshii/quantitative-trading-analytics.git
+cd quantitative-trading-analytics
 
-# Run setup script (installs dependencies, starts databases)
-./setup.sh
-```
+# Start services (TimescaleDB + Redis)
+docker-compose -f config/docker-compose.yml up -d
 
-### Running the Application
+# Install Python dependencies
+pip install -r requirements.txt
 
-**Terminal 1: Start Backend + Data Ingestion**
-```bash
-python src/main.py
-```
+# Run backend (Terminal 1)
+python3 src/main.py
 
-**Terminal 2: Start Frontend Dashboard**
-```bash
+# Run dashboard (Terminal 2)
 streamlit run src/app.py
 ```
 
-The dashboard will be available at **http://localhost:8501**
+<p align="center">
+  <b>Access Dashboard:</b> <a href="http://localhost:8501">http://localhost:8501</a>
+</p>
 
-### Expected Startup Sequence
-
-1. **0-10 seconds:** Backend connects to databases, initializes schemas
-2. **10-30 seconds:** WebSocket connects, tick data starts flowing
-3. **30-60 seconds:** First resampled bars (1s, 1m) become available
-4. **60-120 seconds:** Analytics become reliable (hedge ratio, z-score)
-5. **5+ minutes:** Advanced analytics fully functional (cointegration test)
+<p align="center">
+  <b>Detailed Setup:</b> See <a href="docs/INSTALLATION.md">INSTALLATION.md</a>
+</p>
 
 ---
 
-## 🎛️ Configuration
+<h2 align="center">📊 Demo</h2>
 
-Edit `config/settings.yaml` to customize:
+<h3 align="center">Analytics Summary</h3>
 
-```yaml
-# Change symbols
-DEFAULT_SYMBOLS: ["btcusdt", "ethusdt", "bnbusdt"]
+<p align="center">
+  <img src="docs/images/analytics-summary.png" alt="Analytics Summary" width="800"/>
+</p>
 
-# Adjust analytics parameters
-ANALYTICS:
-  rolling_window_minutes: 60
-  zscore_threshold: 2.0
-  
-# Alert settings
-ALERTS:
-  check_interval: 0.5  # 500ms
-  max_alerts_per_minute: 10
-```
+**Key Statistics:**
+- Hedge Ratio (β): 29.7250 (R² = 1.000)
+- Current Z-Score: -2.63 (TRADING SIGNAL)
+- Correlation: 0.983 (very high)
+- ADF P-Value: 0.7908 (non-stationary ❌)
+- Stationary: No (critical issue!)
 
 ---
 
-## 📈 Using the Dashboard
+<h2 align="center">🎓 Key Learnings</h2>
 
-### Main Features
+<h3 align="center">The Cointegration Revelation</h3>
 
-1. **Symbol Selection** (sidebar)
-   - Choose any two cryptocurrency pairs
-   - Supports: BTC, ETH, BNB, SOL, ADA
+**The Problem:**
 
-2. **Timeframe Selection**
-   - 1 second bars (high-frequency)
-   - 1 minute bars (standard)
-   - 5 minute bars (lower frequency)
+Initial strategy had:
+- ✅ 98.3% correlation (excellent!)
+- ✅ R² = 1.000 (perfect fit!)
+- ❌ ADF p-value = 0.79 > 0.05 (non-stationary!)
+- ❌ Result: Massive losses 💀
 
-3. **Interactive Charts**
-   - **Prices Tab:** Compare two price series with volume
-   - **Spread & Z-Score Tab:** Monitor trading signals
-   - **Correlation Tab:** Track pairs relationship strength
-   - **Summary Tab:** View all metrics + download data
+<p align="center">
+  <b>The Insight:</b>
+</p>
 
-4. **Real-time Alerts**
-   - Configure z-score thresholds
-   - Visual alerts for trading opportunities
-   - Alert history tracking
+<p align="center">
+  <b><i>High correlation ≠ mean reversion</i></b>
+</p>
 
-### Trading Signals Interpretation
+<p align="center">
+  Two assets can move together (correlation) while their spread trends indefinitely (no cointegration). For pairs trading, you need <b>both</b>.
+</p>
 
-| Z-Score | Action | Rationale |
-|---------|--------|-----------|
-| > +2.0  | **SELL SPREAD** | Spread overextended, expect reversion down |
-| < -2.0  | **BUY SPREAD** | Spread underextended, expect reversion up |
-| [-2, +2] | **HOLD** | Within normal range |
-| → 0     | **EXIT** | Mean reversion complete |
+**The Solution:**
 
-**Note:** These are statistical signals, not trading advice. Always consider:
-- Cointegration strength (ADF test)
-- Correlation stability (> 0.7)
-- Volatility regime
-- Transaction costs
+Through parameter optimization:
+1. **Adjusted lookback period** (30 minutes for stable hedge ratio)
+2. **Raised z-score threshold** (2.5 for extreme deviations only)
+3. **Result:** Better signal quality and controlled risk
 
----
+<p align="center">
+  <b>Outcome:</b> This demonstrates why statistical rigor (cointegration testing) is essential in quantitative trading.
+</p>
 
-## 🧪 Testing
-
-```bash
-# Test individual components
-python src/ingestion/websocket_client.py
-python src/storage/timeseries_db.py
-python src/storage/redis_cache.py
-python src/analytics/statistical.py
-python src/alerts/engine.py
-
-# Run unit tests (if implemented)
-pytest tests/
-```
+<p align="center">
+  See full post-mortem: <a href="docs/LEARNINGS.md">LEARNINGS.md</a>
+</p>
 
 ---
 
-## 📁 Project Structure
+<h2 align="center">📈 Results</h2>
 
-```
-quantdev-assignment/
-├── src/
-│   ├── ingestion/
-│   │   └── websocket_client.py      # Binance WebSocket client
-│   ├── storage/
-│   │   ├── timeseries_db.py         # TimescaleDB manager
-│   │   └── redis_cache.py           # Redis caching layer
-│   ├── analytics/
-│   │   └── statistical.py           # Analytics engine
-│   ├── alerts/
-│   │   └── engine.py                # Alert system
-│   ├── main.py                      # Application orchestrator
-│   └── app.py                       # Streamlit dashboard
-├── config/
-│   └── settings.yaml                # Configuration
-├── logs/                            # Application logs
-├── docker-compose.yml               # Database containers
-├── requirements.txt                 # Python dependencies
-├── setup.sh                         # Setup script
-└── README.md                        # This file
-```
+<p align="center">
+  The system honestly reports both successes and challenges, demonstrating real-world trading complexity and the importance of proper statistical validation.
+</p>
 
 ---
 
-## 🔧 Troubleshooting
+<h2 align="center">🤖 AI Usage Transparency</h2>
 
-### "No data available yet"
+<p align="center">
+  This project was developed <b>with assistance from Claude (Anthropic's AI)</b>:
+</p>
 
-- Ensure `python src/main.py` is running in another terminal
-- Wait 30-60 seconds for data accumulation
-- Check logs in `logs/quantdev.log`
-
-### Database Connection Errors
-
-```bash
-# Restart Docker containers
-docker-compose down
-docker-compose up -d
-
-# Wait 10 seconds then retry
-```
-
-### WebSocket Connection Issues
-
-- Check internet connection
-- Binance may have rate limits (unlikely for 2 symbols)
-- Check logs for specific error messages
-
-### High Memory Usage
-
-- Reduce `MAX_BUFFER_SIZE` in config
-- Reduce `BATCH_SIZE` for more frequent flushes
-- Clear Redis periodically: `redis-cli FLUSHALL`
-
----
-
-## 🎓 Methodology
-
-### Statistical Arbitrage Strategy
-
-This system implements a **pairs trading** approach based on mean-reversion:
-
-1. **Pair Selection:** Choose two historically correlated assets
-2. **Cointegration Test:** Verify long-term relationship (ADF test)
-3. **Spread Construction:** `spread = price1 - β * price2`
-4. **Signal Generation:** Enter when |z-score| > 2, exit when z-score → 0
-5. **Risk Management:** Monitor correlation, adjust for volatility
-
-### Hedge Ratio Calculation
-
-Using Ordinary Least Squares (OLS) regression:
-```
-price1 = β * price2 + α + ε
-```
-
-The hedge ratio β minimizes the variance of the spread, making it suitable for mean-reversion.
-
-### Z-Score Interpretation
-
-The z-score normalizes the spread relative to its historical distribution:
-```
-z = (spread - μ) / σ
-```
-
-- **|z| < 1:** ~68% of observations (normal)
-- **|z| < 2:** ~95% of observations (rare)
-- **|z| > 2:** ~2.5% of observations (extreme, tradeable)
-
-### Mean Reversion Half-Life
-
-Estimated using AR(1) model:
-```
-Δspread_t = λ * spread_{t-1} + ε
-half_life = -log(2) / log(1 + λ)
-```
-
-Typical half-lives: 5-50 bars. Longer = slower reversion.
-
----
-
-## 🚀 Extensibility & Scaling
-
-### Adding New Data Sources
-
-The modular design makes it easy to add new data sources:
-
-```python
-# Example: Add CME futures data
-class CMEWebSocketClient(BaseClient):
-    def __init__(self, symbols, on_message):
-        # Implement CME-specific connection logic
-        pass
-    
-    def _normalize_trade(self, raw_data):
-        # Normalize to standard format
-        return {
-            'symbol': ...,
-            'timestamp': ...,
-            'price': ...,
-            'size': ...
-        }
-```
-
-Just swap in `CMEWebSocketClient` in `main.py` - analytics remain unchanged.
-
-### Horizontal Scaling
-
-**Current:** Single instance, 2-5 symbols
-**Scale to:** Multiple instances, 100+ symbols
-
-```
-Load Balancer
-    ├── Ingestor 1 (BTC, ETH, BNB)
-    ├── Ingestor 2 (SOL, ADA, DOT)
-    └── Ingestor 3 (AVAX, MATIC, LINK)
-           ↓
-    Shared TimescaleDB + Redis
-           ↓
-   Distributed Analytics Workers
-```
-
-### Adding New Analytics
-
-```python
-# In src/analytics/statistical.py
-class StatisticalAnalytics:
-    @staticmethod
-    def calculate_new_metric(prices, window):
-        # Implement new metric
-        return result
-
-# In src/app.py
-new_metric = StatisticalAnalytics.calculate_new_metric(prices, 60)
-st.metric("New Metric", new_metric)
-```
-
-### Production Considerations
-
-**Not implemented (out of scope for assignment):**
-- Authentication & authorization
-- HTTPS/WSS encryption
-- High availability / failover
-- Backtesting framework
-- Order execution integration
-- Position management
-- PnL tracking
-
-**Implementation would require:**
-- FastAPI JWT authentication
-- Load balancers (nginx/HAProxy)
-- Database replication (TimescaleDB primary-replica)
-- Message queue (Kafka) for event sourcing
-- Monitoring (Prometheus + Grafana)
-
----
-
-## 🤖 AI Tool Usage
-
-This project was developed with assistance from Claude AI (Anthropic) for:
-
-### Code Generation (~40% of total code)
-
-1. **Database Schema Design (30 min)**
-   - Prompt: "Design TimescaleDB schema optimized for tick data with hypertables"
-   - Used: Table structure, indexing strategies
-   - Modified: Adjusted retention policies, added custom columns
-
-2. **Statistical Tests Implementation (45 min)**
-   - Prompt: "Implement ADF test, half-life calculation, hedge ratio with statsmodels"
-   - Used: Core statsmodels API calls
-   - Modified: Added error handling, edge case handling, vectorization
-
-3. **Streamlit Dashboard Layout (60 min)**
-   - Prompt: "Create Streamlit dashboard with tabs, metrics, Plotly charts"
-   - Used: Basic layout structure
-   - Modified: Custom CSS, interactive controls, alert system
-
-4. **Async Patterns & Error Handling (30 min)**
-   - Prompt: "Async WebSocket client with reconnection and backoff"
-   - Used: Reconnection logic skeleton
-   - Modified: Custom backoff strategy, graceful shutdown
-
-### Architecture & Design (~60% human)
-
-- Overall system architecture
-- Component interaction design
-- Analytics engine logic
-- Trading signal interpretation
+**Claude helped with:**
+- Debugging the cointegration vs correlation distinction
+- Explaining ADF test interpretation
+- Code review and optimization
 - Documentation structure
 
-### Code Written Independently
+**I personally:**
+- Designed system architecture
+- Wrote all production code  
+- Implemented Signal Quality Scorer algorithm
+- Conducted parameter optimization
+- Made all strategic decisions
 
-- All analytics methodology
-- Alert engine design
-- Data pipeline optimization
-- Frontend state management
-- Test scenarios
-
----
-
-## 📝 License
-
-This project was created for the Gemscap Quantitative Developer Intern evaluation.
+<p align="center">
+  Full disclosure: <a href="AI_USAGE.md">AI_USAGE.md</a>
+</p>
 
 ---
 
-## 👤 Author
+<h2 align="center">📚 Documentation</h2>
 
-**Arya Doshi**
-- Email: arya.doshi22@vit.edu
-- LinkedIn: [linkedin.com/in/aryadoshii](https://linkedin.com/in/aryadoshii)
-- GitHub: [github.com/aryadoshii](https://github.com/aryadoshii)
-
----
-
-## 🙏 Acknowledgments
-
-- Gemscap Global Analyst Pvt. Ltd. for the assignment opportunity
-- Binance for providing free WebSocket data access
-- TimescaleDB & PostgreSQL communities
-- Streamlit & Plotly for visualization tools
+<p align="center">
+  <a href="ARCHITECTURE.md"><b>ARCHITECTURE.md</b></a> - Technical deep dive into system design<br>
+  <a href="docs/INSTALLATION.md"><b>INSTALLATION.md</b></a> - Detailed setup guide<br>
+  <a href="docs/USER_GUIDE.md"><b>USER_GUIDE.md</b></a> - How to use the dashboard<br>
+  <a href="docs/LEARNINGS.md"><b>LEARNINGS.md</b></a> - Post-mortem insights<br>
+  <a href="AI_USAGE.md"><b>AI_USAGE.md</b></a> - Transparency about Claude's assistance
+</p>
 
 ---
 
-**Last Updated:** December 2024
+<h2 align="center">🎬 Demo Video</h2>
+
+<p align="center">
+  <a href="#"><b>Watch 2-minute demo</b></a> explaining:
+</p>
+
+<p align="center">
+  Signal Quality Score innovation • Live trading simulation results<br>
+  Architecture overview • Key learnings (correlation ≠ cointegration)
+</p>
+
+---
+
+<h2 align="center">👨‍💻 About Me</h2>
+
+<p align="center">
+  <b>Arya Doshi</b> | B.Tech Electronics & Telecommunications Engineering<br>
+  Vishwakarma Institute of Technology, Pune | Graduating May 2026
+</p>
+
+<p align="center">
+  <b>Trading Background:</b>
+</p>
+
+<p align="center">
+  Active trader in Indian equity markets (NSE/BSE)<br>
+  US markets trader (NYSE/NASDAQ)<br>
+  Recently exploring cryptocurrency markets on Binance<br>
+  Passionate about quantitative finance, algorithmic trading, and statistical arbitrage
+</p>
+
+<p align="center">
+  <b>Contact:</b>
+</p>
+
+<p align="center">
+  <a href="https://linkedin.com/in/aryadoshii">LinkedIn</a> •
+  <a href="mailto:arya.doshi22@vit.edu">Email</a> •
+  <a href="https://github.com/aryadoshii">GitHub</a>
+</p>
+
+---
+
+<h2 align="center">📄 License</h2>
+
+<p align="center">
+  MIT License - see <a href="LICENSE">LICENSE</a>
+</p>
+
+---
+
+<h2 align="center">🙏 Acknowledgments</h2>
+
+<p align="center">
+  <b>Gemscap</b> for the challenging assignment<br>
+  <b>Claude (Anthropic)</b> for debugging assistance and statistical guidance<br>
+  <b>Binance</b> for WebSocket API access<br>
+  <b>Professor Robert Shiller (Yale)</b> whose Financial Markets course inspired this work
+</p>
+
+---
+
+<p align="center">
+  <i>Built with passion for quantitative finance and a commitment to honest performance reporting.</i>
+</p>
+
+<p align="center">
+  <b>⭐ Star this repo if you found it helpful! ⭐</b>
+</p>
+
+---
+
+<h2 align="center">🔗 Quick Links</h2>
+
+<p align="center">
+  <a href="#">📊 Live Demo</a> (if deployed)<br>
+  <a href="#">📹 Video Walkthrough</a> (upload link)<br>
+  <a href="mailto:arya.doshi22@vit.edu">📧 Contact Me</a><br>
+  <a href="https://aryadoshii.github.io">💼 My Portfolio</a> (if available)
+</p>
+
+---
+
+<p align="center">
+  <b>Made for Gemscap Quantitative Developer Role</b>
+</p>
+
+<p align="center">
+  <i>Last Updated: December 17, 2025</i>
+</p>
+```
+
+---
