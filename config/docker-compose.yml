@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: quantdev-timescale
+    environment:
+      POSTGRES_DB: trading_data
+      POSTGRES_USER: trader
+      POSTGRES_PASSWORD: tradersecret
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    command: postgres -c shared_preload_libraries=timescaledb -c max_connections=200
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: quantdev-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+
+volumes:
+  timescale_data:
+  redis_data:

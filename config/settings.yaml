@@ -1,0 +1,39 @@
+# Application Configuration
+
+# Database Settings
+DATABASE_URL: "postgresql://trader:tradersecret@localhost:5432/trading_data"
+REDIS_URL: "redis://localhost:6379"
+
+# WebSocket Settings
+BINANCE_WS_BASE: "wss://fstream.binance.com/ws"
+DEFAULT_SYMBOLS: ["btcusdt", "ethusdt", "bnbusdt", "solusdt", "adausdt"]
+RECONNECT_DELAY: 5
+MAX_RECONNECT_ATTEMPTS: 10
+
+# Sampling Intervals (in seconds)
+SAMPLING_INTERVALS:
+  tick: 0  # Raw tick data
+  1s: 1
+  1m: 60
+  5m: 300
+
+# Analytics Settings
+ANALYTICS:
+  rolling_window_minutes: 60
+  zscore_threshold: 2.0
+  adf_significance: 0.05
+  correlation_window: 100
+  
+# Alert Settings
+ALERTS:
+  check_interval: 0.5  # 500ms
+  max_alerts_per_minute: 10
+
+# Performance Settings
+BATCH_SIZE: 1000
+BUFFER_FLUSH_INTERVAL: 5  # seconds
+MAX_MEMORY_MB: 512
+
+# Logging
+LOG_LEVEL: "INFO"
+LOG_FILE: "logs/quantdev.log"
